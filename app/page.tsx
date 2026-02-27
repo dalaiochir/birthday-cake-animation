@@ -914,6 +914,12 @@ export default function Home() {
   opacity: 0.92;
   filter: saturate(1.05);
   pointer-events:none;
+  
+}
+
+.envelope::after{
+  content: none !important;
+  display: none !important;
 }
 
 /* paper */
