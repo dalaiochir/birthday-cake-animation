@@ -4,7 +4,10 @@ import { useEffect, useMemo, useRef, useState } from "react";
 
 function playChime() {
   // Copyright-free жижиг аялгуу (WebAudio)
-  const AudioCtx = window.AudioContext || window.webkitAudioContext;
+  type WebkitWindow = Window & typeof globalThis & { webkitAudioContext?: typeof AudioContext };
+
+const AudioCtx =
+  window.AudioContext || (window as WebkitWindow).webkitAudioContext;
   if (!AudioCtx) return;
 
   const ctx = new AudioCtx();
