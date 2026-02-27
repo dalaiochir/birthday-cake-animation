@@ -1,8 +1,30 @@
-* {
-  box-sizing: border-box;
+:root{
+  --bg1:#0b1020;
+  --bg2:#1a1030;
+  --pink:#ff4d8d;
+  --rose:#ff7aa8;
+  --violet:#7c3aed;
+  --gold:#ffcf5a;
+  --glass: rgba(255,255,255,0.10);
+  --glass2: rgba(255,255,255,0.16);
+  --stroke: rgba(255,255,255,0.22);
+  --text: rgba(255,255,255,0.92);
+  --muted: rgba(255,255,255,0.72);
 }
 
-html, body {
-  padding: 0;
-  margin: 0;
+*{ box-sizing:border-box; }
+html,body{ height:100%; }
+body{
+  margin:0;
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+  color: var(--text);
+  background:
+    radial-gradient(1000px 600px at 20% 10%, rgba(255,77,141,0.26), transparent 55%),
+    radial-gradient(900px 560px at 80% 25%, rgba(124,58,237,0.22), transparent 58%),
+    radial-gradient(800px 560px at 50% 95%, rgba(255,207,90,0.18), transparent 60%),
+    linear-gradient(180deg, var(--bg1), var(--bg2));
+  overflow-x:hidden;
 }
+
+a{ color:inherit; }
+button{ font-family:inherit; }
