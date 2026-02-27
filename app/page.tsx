@@ -26,7 +26,6 @@ type Spark = {
 };
 
 function playChime() {
-  // TS-safe webkitAudioContext
   type WebkitWindow = Window &
     typeof globalThis & { webkitAudioContext?: typeof AudioContext };
 
@@ -91,7 +90,7 @@ export default function Home() {
     []
   );
 
-  // Canvas confetti/sparkle
+  // Canvas loop
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -115,6 +114,7 @@ export default function Home() {
       const H = window.innerHeight;
       ctx.clearRect(0, 0, W, H);
 
+      // confetti
       const c = confettiRef.current;
       for (let i = c.length - 1; i >= 0; i--) {
         const p = c[i];
@@ -135,17 +135,18 @@ export default function Home() {
         if (p.life <= 0 || p.y > H + 90) c.splice(i, 1);
       }
 
+      // sparks (stream + glitter)
       const s = sparkRef.current;
       for (let i = s.length - 1; i >= 0; i--) {
         const sp = s[i];
         sp.x += sp.vx;
         sp.y += sp.vy;
-        sp.vy += 0.02;
-        sp.life -= 0.02;
+        sp.vy += 0.015;
+        sp.life -= 0.024;
 
         ctx.save();
         ctx.globalAlpha = Math.max(0, sp.life);
-        ctx.fillStyle = `rgba(255,245,200,${Math.max(0, sp.life)})`;
+        ctx.fillStyle = `rgba(255,245,210,${Math.max(0, sp.life)})`;
         ctx.beginPath();
         ctx.arc(sp.x, sp.y, sp.r, 0, Math.PI * 2);
         ctx.fill();
@@ -166,7 +167,7 @@ export default function Home() {
     };
   }, []);
 
-  const burst = () => {
+  const burstConfetti = () => {
     const W = window.innerWidth;
     const H = window.innerHeight;
     const cx = W / 2;
@@ -190,18 +191,28 @@ export default function Home() {
       });
     }
     confettiRef.current.push(...parts);
+  };
 
-    const spCount = 34;
+  // ✨ Particles stream from gift mouth while opening
+  const streamFromGift = () => {
+    const W = window.innerWidth;
+    const H = window.innerHeight;
+
+    // Gift is centered visually; mouth position approx:
+    const mx = W / 2;
+    const my = Math.min(H * 0.50, 520) - 120; // slightly above gift center
+
+    const count = 70;
     const sparks: Spark[] = [];
-    for (let i = 0; i < spCount; i++) {
-      const a = (Math.PI * 2 * i) / spCount + (Math.random() - 0.5) * 0.35;
-      const sp = 0.9 + Math.random() * 2.0;
+    for (let i = 0; i < count; i++) {
+      const spread = (Math.random() - 0.5) * 1.2;
+      const up = 2.4 + Math.random() * 2.8;
       sparks.push({
-        x: cx,
-        y: cy,
-        vx: Math.cos(a) * sp,
-        vy: Math.sin(a) * sp - 0.9,
-        r: 1.2 + Math.random() * 2.2,
+        x: mx + (Math.random() - 0.5) * 20,
+        y: my + (Math.random() - 0.5) * 10,
+        vx: spread * (0.9 + Math.random() * 1.2),
+        vy: -up - Math.random() * 1.8,
+        r: 1.2 + Math.random() * 2.4,
         life: 1
       });
     }
@@ -213,15 +224,22 @@ export default function Home() {
 
     setPhase("opening");
     playChime();
-    burst();
-    setTimeout(burst, 220);
 
-    // after lid opens + box vanishes, show cake rising
+    // opening: sparkle stream + a little confetti
+    streamFromGift();
+    setTimeout(streamFromGift, 120);
+    setTimeout(streamFromGift, 240);
+    setTimeout(streamFromGift, 360);
+
+    burstConfetti();
+    setTimeout(burstConfetti, 220);
+
+    // after lid opens + box vanishes -> show cake
     setTimeout(() => {
       setPhase("cake");
-      burst();
-      setTimeout(burst, 240);
-    }, 950);
+      burstConfetti();
+      setTimeout(burstConfetti, 240);
+    }, 980);
   };
 
   return (
@@ -229,19 +247,19 @@ export default function Home() {
       <canvas ref={canvasRef} className="fx" aria-hidden />
 
       <div className="card">
-        <div className="header">
-          <div className="heart" aria-hidden>
-            <span />
-          </div>
-          <div>
-            <h1 className="title">{text.headline}</h1>
-            <p className="sub">{text.sub}</p>
-          </div>
+        {/* Text appears WITH cake */}
+        <div className={`hero ${phase === "cake" ? "show" : ""}`}>
+          <h1 className="title">{text.headline}</h1>
+          <p className="sub">{text.sub}</p>
         </div>
 
-        {/* ONLY gift box initially */}
         <section className="center">
-          <div className={`gift ${phase === "opening" ? "opening" : ""} ${phase === "cake" ? "gone" : ""}`}>
+          <div
+            className={`gift ${phase === "opening" ? "opening" : ""} ${
+              phase === "cake" ? "gone" : ""
+            }`}
+            aria-label="gift box"
+          >
             <div className="giftShadow" />
             <div className="lid">
               <div className="bow">
@@ -257,8 +275,9 @@ export default function Home() {
             <div className={`sparkle ${phase !== "closed" ? "spark" : ""}`} aria-hidden />
           </div>
 
-          {/* Cake appears AFTER opening */}
+          {/* Cinematic cake rise + glow */}
           <div className={`cakeWrap ${phase === "cake" ? "show" : ""}`} aria-label="birthday cake">
+            <div className="cakeGlow" aria-hidden />
             <div className="cake">
               <div className="plate" />
               <div className="shadow" />
@@ -289,6 +308,7 @@ export default function Home() {
               </div>
 
               <div className="shine" />
+              <div className="shimmer" aria-hidden />
             </div>
           </div>
 
@@ -339,7 +359,7 @@ export default function Home() {
           z-index:1;
         }
         .card{
-          width:min(740px, 100%);
+          width:min(760px, 100%);
           z-index:2;
           position:relative;
           border-radius:26px;
@@ -351,50 +371,30 @@ export default function Home() {
           overflow:hidden;
         }
 
-        .header{
-          display:flex;
-          gap:14px;
-          align-items:flex-start;
+        /* Hero text appears with cake */
+        .hero{
+          text-align:left;
+          opacity:0;
+          transform: translateY(10px);
+          transition: opacity 420ms ease, transform 420ms ease;
+          margin-bottom: 6px;
+          pointer-events:none;
+          height: 0;
+          overflow: hidden;
+        }
+        .hero.show{
+          opacity:1;
+          transform: translateY(0px);
+          pointer-events:auto;
+          height: auto;
+          overflow: visible;
+          margin-bottom: 10px;
         }
         .title{ margin:0; font-size:28px; letter-spacing:-0.02em; }
         .sub{ margin:8px 0 0; color: rgba(255,255,255,0.74); line-height:1.55; }
 
-        .heart{
-          width:44px;height:44px;
-          border-radius:14px;
-          border:1px solid rgba(255,255,255,0.20);
-          background: rgba(255,255,255,0.10);
-          display:grid;
-          place-items:center;
-          box-shadow: 0 14px 40px rgba(0,0,0,0.25);
-        }
-        .heart span{
-          width:18px;height:18px;
-          background: radial-gradient(circle at 30% 30%, #fff, rgba(255,122,168,1) 55%, rgba(255,77,141,1));
-          transform: rotate(45deg);
-          border-radius:6px;
-          position:relative;
-          display:block;
-          filter: drop-shadow(0 12px 18px rgba(255,77,141,0.25));
-          animation: pulse 1.8s ease-in-out infinite;
-        }
-        .heart span::before,
-        .heart span::after{
-          content:"";
-          position:absolute;
-          width:18px;height:18px;
-          background: inherit;
-          border-radius:50%;
-          top:-9px; left:0;
-        }
-        .heart span::after{ top:0; left:-9px; }
-        @keyframes pulse{
-          0%,100%{ transform: rotate(45deg) scale(1); }
-          50%{ transform: rotate(45deg) scale(1.12); }
-        }
-
         .center{
-          margin-top: 18px;
+          margin-top: 14px;
           display:grid;
           place-items:center;
           gap: 14px;
@@ -492,7 +492,7 @@ export default function Home() {
           opacity:0;
           pointer-events:none;
         }
-        .sparkle.spark{ animation: sparkle 900ms ease-out 180ms both; }
+        .sparkle.spark{ animation: sparkle 900ms ease-out 160ms both; }
         @keyframes sparkle{
           0%{ opacity:0; transform: translateX(-50%) scale(0.7); }
           40%{ opacity:0.7; }
@@ -507,33 +507,54 @@ export default function Home() {
           100%{ transform: rotate(-42deg) translate(-18px, -18px); }
         }
 
-        /* after opening finished -> vanish the gift */
         .gift.gone{ animation: vanish 380ms ease-out both; }
         @keyframes vanish{
           from{ opacity:1; transform: translateY(2px) scale(1); }
           to{ opacity:0; transform: translateY(10px) scale(0.85); }
         }
 
-        /* Cake reveal (starts hidden, rises from where gift was) */
+        /* Cinematic cake reveal */
         .cakeWrap{
-          width: 300px;
-          height: 260px;
+          width: 320px;
+          height: 270px;
           display:grid;
           place-items:center;
           opacity:0;
-          transform: translateY(24px) scale(0.96);
+          transform: translateY(30px) scale(0.92);
           pointer-events:none;
-          margin-top: -4px;
+          margin-top: -6px;
+          position:relative;
         }
         .cakeWrap.show{
           opacity:1;
           pointer-events:auto;
-          animation: cakeRise 900ms cubic-bezier(.2,.9,.2,1) both;
+          animation: cinematicRise 1100ms cubic-bezier(.16,.98,.2,1) both;
         }
-        @keyframes cakeRise{
-          0%{ opacity:0; transform: translateY(30px) scale(0.92); }
-          60%{ opacity:1; transform: translateY(-10px) scale(1.04); }
+
+        /* Bounce + overshoot + settle */
+        @keyframes cinematicRise{
+          0%{ opacity:0; transform: translateY(40px) scale(0.88); filter: blur(2px); }
+          55%{ opacity:1; transform: translateY(-14px) scale(1.06); filter: blur(0px); }
+          78%{ opacity:1; transform: translateY(6px) scale(0.99); }
           100%{ opacity:1; transform: translateY(0px) scale(1); }
+        }
+
+        .cakeGlow{
+          position:absolute;
+          inset: 10px 40px 30px 40px;
+          border-radius: 999px;
+          background: radial-gradient(circle, rgba(255,207,90,0.25), rgba(255,77,141,0.18), transparent 65%);
+          opacity:0;
+          filter: blur(6px);
+          pointer-events:none;
+        }
+        .cakeWrap.show .cakeGlow{
+          animation: glowPulse 1300ms ease-out 120ms both;
+        }
+        @keyframes glowPulse{
+          0%{ opacity:0; transform: scale(0.85); }
+          45%{ opacity:1; transform: scale(1.05); }
+          100%{ opacity:0.75; transform: scale(1); }
         }
 
         /* Cake visuals */
@@ -570,7 +591,7 @@ export default function Home() {
           transform:translateX(-50%);
           border-radius:18px;
           overflow:hidden;
-          box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+          box-shadow: 0 22px 70px rgba(0,0,0,0.30);
           background: linear-gradient(180deg, rgba(255,122,168,0.95), rgba(255,77,141,0.88));
           border:1px solid rgba(255,255,255,0.16);
         }
@@ -638,7 +659,7 @@ export default function Home() {
           transform:translateX(-50%);
           border-radius:999px;
           background: radial-gradient(circle at 35% 40%, #fff7b0, #ffb703 60%, #fb5607 100%);
-          filter: drop-shadow(0 14px 18px rgba(255,183,3,0.35));
+          filter: drop-shadow(0 16px 22px rgba(255,183,3,0.40));
           opacity:0;
         }
         .shine{
@@ -647,18 +668,39 @@ export default function Home() {
           bottom:90px;
           width:140px;height:140px;
           transform:translateX(-50%);
-          background: radial-gradient(circle, rgba(255,255,255,0.50), transparent 60%);
+          background: radial-gradient(circle, rgba(255,255,255,0.55), transparent 60%);
           opacity:0;
           pointer-events:none;
+        }
+
+        /* shimmer sweep across cake */
+        .shimmer{
+          position:absolute;
+          left:-40%;
+          top: 60px;
+          width: 60%;
+          height: 120px;
+          transform: rotate(18deg);
+          background: linear-gradient(90deg, transparent, rgba(255,255,255,0.22), transparent);
+          opacity:0;
+          pointer-events:none;
+        }
+        .cakeWrap.show .shimmer{
+          animation: shimmer 900ms ease-out 260ms both;
+        }
+        @keyframes shimmer{
+          0%{ opacity:0; transform: translateX(0) rotate(18deg); }
+          30%{ opacity:1; }
+          100%{ opacity:0; transform: translateX(220%) rotate(18deg); }
         }
 
         /* When cake shows, light flames & shine */
         .cakeWrap.show .flame{
           opacity:1;
-          animation: flameIn 260ms ease-out 220ms both, flicker 1.1s ease-in-out 560ms infinite;
+          animation: flameIn 260ms ease-out 260ms both, flicker 1.1s ease-in-out 620ms infinite;
         }
-        .cakeWrap.show .candles .candle{ animation: wiggle 900ms ease-in-out 260ms both; }
-        .cakeWrap.show .shine{ animation: shine 950ms ease-out 240ms both; }
+        .cakeWrap.show .candles .candle{ animation: wiggle 900ms ease-in-out 300ms both; }
+        .cakeWrap.show .shine{ animation: shine 950ms ease-out 300ms both; }
 
         @keyframes flameIn{
           from{ transform:translateX(-50%) scale(0.6); opacity:0; }
@@ -677,7 +719,7 @@ export default function Home() {
         }
         @keyframes shine{
           0%{ opacity:0; transform:translateX(-50%) scale(0.7); }
-          40%{ opacity:0.65; }
+          40%{ opacity:0.70; }
           100%{ opacity:0; transform:translateX(-50%) scale(1.35); }
         }
 
